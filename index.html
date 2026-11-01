@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#34c759">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="走路日記">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<title>走路日記</title>
+<style>
+:root{
+  --bg:#f2f2f7;--card:#fff;--text:#1c1c1e;--sub:#8e8e93;--line:#e5e5ea;
+  --accent:#34c759;--accent-d:#248a3d;--down:#248a3d;--up:#ff9500;--danger:#ff3b30;--r:16px;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#000;--card:#1c1c1e;--text:#f2f2f7;--sub:#98989f;--line:#38383a;--accent:#30d158;--accent-d:#30d158;--down:#30d158;--up:#ff9f0a;--danger:#ff453a}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font:16px/1.5 -apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
+header{padding:calc(env(safe-area-inset-top) + 14px) 20px 4px}
+h1{margin:0;font-size:28px;letter-spacing:.5px}
+.sub{color:var(--sub);font-size:14px}
+main{padding:8px 16px calc(96px + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
+.view[hidden]{display:none}
+.card{background:var(--card);border-radius:var(--r);padding:6px 16px;margin:12px 0}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row input{border:0;background:transparent;color:var(--text);font:inherit;text-align:right;min-width:0;width:150px;outline:none}
+.sec{font-weight:600;margin:14px 0 6px}
+input.big{width:100%;border:1.5px solid var(--line);background:var(--bg);color:var(--text);border-radius:12px;
+  font:600 28px/1.2 inherit;padding:10px 14px;text-align:center;outline:none}
+input.big:focus{border-color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 6px}
+.chip{border:0;background:var(--bg);color:var(--text);border-radius:999px;padding:7px 14px;font:inherit;font-size:14px}
+.chip:active{background:var(--accent);color:#fff}
+.total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);margin-top:12px;padding:12px 0 8px;color:var(--sub)}
+.total b{font-size:32px;color:var(--accent-d)}
+.btn{display:block;width:100%;border:0;border-radius:14px;background:var(--accent);color:#fff;font:600 18px/1 inherit;padding:16px;margin:12px 0}
+.btn:active{filter:brightness(.92)}
+.btn.ghost{background:var(--card);color:var(--text)}
+.btn.danger{color:var(--danger)}
+.btn.sm{font-size:16px;padding:13px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;padding:14px 8px}
+.stats div{display:flex;flex-direction:column}
+.stats b{font-size:26px}
+.stats span{font-size:12px;color:var(--sub)}
+.banner{background:#fff4e0;color:#8a5a00;border-radius:12px;padding:12px 14px;margin:12px 0;font-size:14px}
+@media (prefers-color-scheme:dark){.banner{background:#3a2c10;color:#ffd48a}}
+.item{display:flex;align-items:center;gap:14px;width:100%;border:0;background:transparent;color:var(--text);font:inherit;
+  text-align:left;padding:12px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item .d{width:56px;display:flex;flex-direction:column}
+.item .d small,.item .mid small{color:var(--sub);font-size:12px}
+.item .mid{flex:1;display:flex;flex-direction:column}
+.item .t{font-weight:700;font-size:20px;color:var(--accent-d);text-align:right}
+.item .t small{font-size:12px;color:var(--sub);margin-left:2px}
+.empty{color:var(--sub);text-align:center;padding:24px 8px}
+.empty.small{padding:12px 8px;font-size:14px}
+#spark svg{width:100%;height:auto;display:block;margin-top:10px}
+.spark-l{display:flex;justify-content:space-between;color:var(--sub);font-size:12px;padding:4px 0 10px}
+.mcard{background:var(--card);border-radius:var(--r);padding:16px;margin:12px 0}
+.mcard h3{margin:0 0 4px;display:flex;justify-content:space-between;align-items:center;font-size:17px}
+.badge{font-size:12px;background:var(--bg);color:var(--sub);padding:3px 10px;border-radius:999px;font-weight:500}
+.bigdiff{font-size:38px;font-weight:800;line-height:1.2;margin:6px 0 2px}
+.bigdiff.down{color:var(--down)}.bigdiff.up{color:var(--up)}.bigdiff.flat,.bigdiff.base,.bigdiff.nodata{color:var(--text)}
+.meta{color:var(--sub);font-size:14px}
+.msg{margin-top:10px;padding:12px 14px;background:var(--bg);border-radius:12px}
+.hint{color:var(--sub);font-size:13px;margin:6px 4px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+.modal[hidden]{display:none}
+.sheet{background:var(--card);width:100%;max-width:560px;border-radius:24px 24px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));
+  text-align:center;animation:up .25s ease-out;max-height:90vh;overflow:auto}
+.sheet .emoji{font-size:56px;line-height:1}
+.sheet h2{margin:8px 0 0}
+.sheet .msg{text-align:left}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.tabbar{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom);z-index:20}
+.tab{flex:1;border:0;background:transparent;color:var(--sub);font:inherit;font-size:11px;padding:8px 0 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tab i{font-style:normal;font-size:22px}
+.tab.on{color:var(--accent-d);font-weight:600}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:rgba(30,30,30,.92);color:#fff;
+  padding:10px 18px;border-radius:999px;font-size:14px;z-index:60;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.kv{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
+.kv:last-child{border-bottom:0}.kv span:first-child{color:var(--sub)}
+</style>
+</head>
+<body>
+<header><h1>🚶 走路日記</h1><div class="sub" id="sub"></div></header>
+<main>
+
+<!-- 記錄 -->
+<section class="view" id="v-rec">
+  <div class="banner" id="banner" hidden></div>
+  <div class="card">
+    <label class="row"><span>📅 日期</span><input type="date" id="date"></label>
+    <label class="row"><span>⚖️ 體重（kg）</span><input id="w" type="number" inputmode="decimal" step="0.1" min="20" max="300" placeholder="選填"></label>
+  </div>
+  <div class="card">
+    <div class="sec">☀️ 中午走了（分鐘）</div>
+    <input class="big" id="noon" type="number" inputmode="numeric" min="0" max="600" placeholder="0">
+    <div class="chips" data-for="noon"></div>
+    <div class="sec">🌙 晚上走了（分鐘）</div>
+    <input class="big" id="eve" type="number" inputmode="numeric" min="0" max="600" placeholder="0">
+    <div class="chips" data-for="eve"></div>
+    <div class="total"><span>今日合計（自動加總）</span><span><b id="total">0</b> 分鐘</span></div>
+  </div>
+  <button class="btn" id="saveBtn">儲存今天的紀錄</button>
+  <button class="btn ghost danger sm" id="delBtn" hidden>刪除這一天的紀錄</button>
+  <div class="card stats" id="stats"></div>
+</section>
+
+<!-- 紀錄表 -->
+<section class="view" id="v-list" hidden>
+  <div class="card"><div class="sec">📈 體重趨勢（最近 60 筆）</div><div id="spark"></div></div>
+  <div class="card" id="list"></div>
+  <div class="hint">點任何一天就能修改 ✏️</div>
+</section>
+
+<!-- 月報 -->
+<section class="view" id="v-rep" hidden><div id="reports"></div></section>
+
+<!-- 設定 -->
+<section class="view" id="v-set" hidden>
+  <div class="card" id="info"></div>
+  <button class="btn" id="shareBtn">📤 備份（分享／存到「檔案」）</button>
+  <button class="btn ghost sm" id="dlBtn">⬇️ 下載備份檔（.json）</button>
+  <button class="btn ghost sm" id="impBtn">📥 匯入備份檔</button>
+  <input type="file" id="impFile" accept="application/json,.json" hidden>
+  <div class="hint">資料只存在這支手機的瀏覽器裡，沒有上傳到任何地方。換手機、清瀏覽器資料之前，記得先備份！匯入時會「合併」：同一天以備份檔為準，不會刪掉你現有的其他天。</div>
+  <div class="card" style="margin-top:20px">
+    <div class="sec">📲 加到主畫面</div>
+    <div class="meta" style="padding-bottom:10px">iPhone：Safari 點「分享」→「加入主畫面」<br>Android：Chrome 點「⋮」→「安裝應用程式」</div>
+  </div>
+  <button class="btn ghost danger sm" id="wipeBtn">🗑️ 清除所有資料</button>
+</section>
+</main>
+
+<nav class="tabbar">
+  <button class="tab on" data-v="rec"><i>✏️</i>記錄</button>
+  <button class="tab" data-v="list"><i>📋</i>紀錄表</button>
+  <button class="tab" data-v="rep"><i>📊</i>月報</button>
+  <button class="tab" data-v="set"><i>⚙️</i>設定</button>
+</nav>
+<div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const VERSION = '1.0.0';
+const KEY = 'walklog.v1';
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2, '0');
+const WD = ['日','一','二','三','四','五','六'];
+
+/* ---------- 日期工具（一律用本地時間，避免台灣時區差 8 小時的 bug） ---------- */
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const today = () => ymd(new Date());
+const monthKey = s => s.slice(0, 7);
+const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const mLabel = k => { const [y, m] = k.split('-'); return y + ' 年 ' + Number(m) + ' 月'; };
+
+/* ---------- 資料 ---------- */
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if (d && d.records) return { records: d.records, shownMonths: d.shownMonths || [], lastBackup: d.lastBackup || null };
+  } catch (e) {}
+  return { records: {}, shownMonths: [], lastBackup: null };
+}
+let db = load();
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); }
+  catch (e) { toast('儲存失敗，請先備份資料並檢查瀏覽器空間'); }
+}
+const tot = r => r ? (r.noon || 0) + (r.eve || 0) : 0;
+const num = v => { const n = parseFloat(v); return Number.isFinite(n) ? n : null; };
+
+/* ---------- 月統計 ---------- */
+function monthStats() {
+  const m = {};
+  for (const [d, r] of Object.entries(db.records)) {
+    const k = monthKey(d);
+    const s = m[k] || (m[k] = { key: k, days: 0, wSum: 0, wN: 0, minutes: 0, walkDays: 0 });
+    s.days++; s.minutes += tot(r);
+    if (tot(r) > 0) s.walkDays++;
+    if (r.w != null) { s.wSum += r.w; s.wN++; }
+  }
+  for (const s of Object.values(m)) s.avg = s.wN ? s.wSum / s.wN : null;
+  return m;
+}
+function prevWithWeight(stats, k) {
+  const keys = Object.keys(stats).sort();
+  for (let j = keys.indexOf(k) - 1; j >= 0; j--) if (stats[keys[j]].avg != null) return stats[keys[j]];
+  return null;
+}
+
+/* ---------- 勵志小語 ---------- */
+const MSG = {
+  down: [
+    '太強了吧！！這個月你是全場 MVP，走路機要幫你頒獎了 🏆',
+    '體重往下掉，是因為你的努力被地球看見了！走路機含淚：「終於有人把我當運動器材，而不是曬衣架」😭',
+    '大力鼓掌 👏👏👏 每一步都算數，身體全部都記得！下個月繼續讓走路機忙起來！',
+    '這個數字不會說謊：你真的有在走！給自己一個大大的擁抱 🤗',
+    'Respect！你的毅力讓體重計都不敢大聲說話了 🎊 繼續保持！'
+  ],
+  up: [
+    '體重只是一個數字，不是你的成績單。這個月你還是有出現、有在走，這就贏過很多人了 💪',
+    '水分、作息、天氣、一頓超好吃的大餐……體重本來就會上上下下，別苛責自己，走路機永遠歡迎你 🤍',
+    '身體不是一條直線，是一條山路，偶爾上坡很正常。下個月，我們繼續一步一步走 👣',
+    '多一點點不代表白走了，身體還在默默調整。你願意持續記錄，本身就很了不起 ✨',
+    '重點是你沒有放棄。走路機：「我還在這裡等你，不離不棄。」🫶 下個月一起加油！'
+  ],
+  flat: [
+    '體重穩如泰山～守住也是一種實力！下個月再往前走一小步 👣',
+    '持平也是好消息：你已經把狀態穩住了，接下來只要繼續走，變化就會慢慢出現 🌱',
+    '穩穩的！走路機說：「這種穩定度，我只在你身上看過。」繼續加油 💚'
+  ],
+  base: [
+    '這是你的第一份月報，從今天起就是起跑點！以後每個月都跟它比，一起加油 🚀',
+    '基準線建立完成 ✅ 接下來只要持續走，數字就會慢慢開口說話 👟'
+  ],
+  nodata: [
+    '這個月沒有體重紀錄，但走路的分鐘數全都有算！下個月偶爾上個秤，就能看到變化囉 ⚖️'
+  ]
+};
+const EMOJI = { down: '🏆', up: '🤍', flat: '🧘', base: '🚀', nodata: '⚖️' };
+function pick(type, key) {
+  const pool = MSG[type];
+  let h = 0; for (const c of key) h += c.charCodeAt(0);
+  return pool[h % pool.length];
+}
+function analyze(k, stats) {
+  const s = stats[k], prev = prevWithWeight(stats, k);
+  let type = 'base', d = null;
+  if (s.avg == null) type = 'nodata';
+  else if (prev) {
+    d = Math.round((s.avg - prev.avg) * 10) / 10;
+    type = d <= -0.1 ? 'down' : d >= 0.1 ? 'up' : 'flat';
+  }
+  return { s, prev, d, type, msg: pick(type, k) };
+}
+function bigText(a) {
+  if (a.type === 'base') return a.s.avg.toFixed(1) + ' kg';
+  if (a.type === 'nodata') return '—';
+  const sign = a.d > 0 ? '+' : a.d < 0 ? '−' : '±';
+  return sign + Math.abs(a.d).toFixed(1) + ' kg';
+}
+function metaText(a) {
+  const s = a.s, p = [];
+  if (s.avg != null) p.push('本月平均 ' + s.avg.toFixed(1) + ' kg');
+  if (a.prev) p.push(mLabel(a.prev.key) + ' 平均 ' + a.prev.avg.toFixed(1) + ' kg');
+  return p.join('　｜　');
+}
+function walkText(s) {
+  const avg = s.walkDays ? Math.round(s.minutes / s.walkDays) : 0;
+  return `走路 ${s.walkDays} 天　｜　共 ${s.minutes} 分鐘　｜　平均每天 ${avg} 分鐘`;
+}
+
+/* ---------- 月報彈窗 ---------- */
+function checkMonthReport() {
+  const stats = monthStats(), cur = monthKey(today());
+  const pending = Object.keys(stats).filter(k => k < cur && !db.shownMonths.includes(k)).sort();
+  if (!pending.length) return;
+  const k = pending[pending.length - 1];
+  pending.forEach(x => db.shownMonths.push(x));
+  save();
+  const a = analyze(k, stats);
+  $('#sheet').innerHTML = `
+    <div class="emoji">${EMOJI[a.type]}</div>
+    <h2>${mLabel(k)}成績單</h2>
+    <div class="meta">${a.type === 'base' ? '基準線' : a.prev ? '與 ' + mLabel(a.prev.key) + ' 相比' : ''}</div>
+    <div class="bigdiff ${a.type}">${bigText(a)}</div>
+    <div class="meta">${metaText(a)}</div>
+    <div class="meta" style="margin-top:4px">${walkText(a.s)}</div>
+    <div class="msg">${a.msg}</div>
+    <button class="btn" id="closeModal">收到！繼續走 🚶</button>`;
+  $('#modal').hidden = false;
+}
+$('#modal').addEventListener('click', e => {
+  if (e.target.id === 'modal' || e.target.id === 'closeModal') $('#modal').hidden = true;
+});
+
+/* ---------- 記錄頁 ---------- */
+let cur = today(), lastToday = cur;
+function fill() {
+  const r = db.records[cur];
+  $('#date').max = today();
+  $('#date').value = cur;
+  $('#w').value = r && r.w != null ? r.w : '';
+  $('#noon').value = r && r.noon ? r.noon : '';
+  $('#eve').value = r && r.eve ? r.eve : '';
+  $('#delBtn').hidden = !r;
+  $('#saveBtn').textContent = r ? '更新這一天的紀錄' : (cur === today() ? '儲存今天的紀錄' : '儲存這一天的紀錄');
+  updTotal();
+}
+function updTotal() { $('#total').textContent = (num($('#noon').value) || 0) + (num($('#eve').value) || 0); }
+['noon', 'eve'].forEach(id => $('#' + id).addEventListener('input', updTotal));
+document.querySelectorAll('.chips').forEach(box => {
+  const id = box.dataset.for;
+  box.innerHTML = [10, 15, 20, 30, 45, 60].map(v => `<button type="button" class="chip" data-v="${v}">${v}</button>`).join('') +
+    '<button type="button" class="chip" data-v="">清除</button>';
+  box.addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    $('#' + id).value = b.dataset.v; updTotal();
+  });
+});
+$('#date').addEventListener('change', e => {
+  if (!e.target.value) { e.target.value = cur; return; }
+  cur = e.target.value > today() ? today() : e.target.value;
+  fill();
+});
+$('#saveBtn').addEventListener('click', () => {
+  const w = num($('#w').value), n = num($('#noon').value) || 0, e = num($('#eve').value) || 0;
+  if (w != null && (w < 20 || w > 300)) return toast('體重看起來怪怪的，請再確認一下 ⚖️');
+  if (n < 0 || e < 0 || n > 600 || e > 600) return toast('分鐘數請填 0～600 之間 ⏱️');
+  if (w == null && n === 0 && e === 0) return toast('至少填一項再儲存喔 🙂');
+  db.records[cur] = { w, noon: n, eve: e };
+  save(); fill(); renderAll();
+  toast('已儲存 ✅ 今天共走 ' + (n + e) + ' 分鐘');
+  checkMonthReport();
+});
+$('#delBtn').addEventListener('click', () => {
+  if (!confirm('確定要刪除 ' + cur + ' 的紀錄嗎？')) return;
+  delete db.records[cur]; save(); fill(); renderAll(); toast('已刪除');
+});
+
+function streak() {
+  const d = new Date();
+  let c = 0;
+  if (!(tot(db.records[ymd(d)]) > 0)) d.setDate(d.getDate() - 1);
+  while (tot(db.records[ymd(d)]) > 0) { c++; d.setDate(d.getDate() - 1); }
+  return c;
+}
+function renderStats() {
+  const st = monthStats()[monthKey(today())] || { minutes: 0, walkDays: 0 };
+  $('#stats').innerHTML =
+    `<div><b>${st.minutes}</b><span>本月累積分鐘</span></div>
+     <div><b>${st.walkDays}</b><span>本月走路天數</span></div>
+     <div><b>${streak()}</b><span>連續天數 🔥</span></div>`;
+}
+function renderBanner() {
+  const b = $('#banner'), n = Object.keys(db.records).length;
+  let msg = '';
+  if (n >= 7 && !db.lastBackup) msg = '你已經記錄 ' + n + ' 天了，還沒備份過喔！到「設定」備份一下，手機有狀況也不怕 🛟';
+  else if (db.lastBackup) {
+    const days = Math.floor((Date.now() - Date.parse(db.lastBackup)) / 86400000);
+    if (days >= 14) msg = '已經 ' + days + ' 天沒備份囉，到「設定」順手備份一下吧 🛟';
+  }
+  b.hidden = !msg; b.textContent = msg;
+}
+
+/* ---------- 紀錄表 ---------- */
+function renderList() {
+  const ds = Object.keys(db.records).sort().reverse(), box = $('#list');
+  box.innerHTML = ds.length ? ds.map(d => {
+    const r = db.records[d], dt = parse(d);
+    return `<button class="item" data-d="${d}">
+      <div class="d"><b>${pad(dt.getMonth() + 1)}/${pad(dt.getDate())}</b><small>週${WD[dt.getDay()]}</small></div>
+      <div class="mid"><span>${r.w != null ? r.w.toFixed(1) + ' kg' : '— kg'}</span><small>☀️ ${r.noon || 0} ＋ 🌙 ${r.eve || 0}</small></div>
+      <div class="t">${tot(r)}<small>分</small></div></button>`;
+  }).join('') : '<div class="empty">還沒有紀錄，到「記錄」頁新增第一筆吧 👟</div>';
+  renderSpark();
+}
+$('#list').addEventListener('click', e => {
+  const b = e.target.closest('.item'); if (!b) return;
+  cur = b.dataset.d; fill(); go('rec');
+});
+function renderSpark() {
+  const pts = Object.keys(db.records).sort().filter(d => db.records[d].w != null).slice(-60).map(d => db.records[d].w);
+  const el = $('#spark');
+  if (pts.length < 2) { el.innerHTML = '<div class="empty small">記錄 2 天以上的體重，這裡就會出現趨勢線 📈</div>'; return; }
+  const W = 300, H = 90, p = 10, lo = Math.min(...pts), hi = Math.max(...pts);
+  let mn = lo, mx = hi; if (mx - mn < 0.5) { mn -= 0.25; mx += 0.25; }
+  const X = i => (p + i * (W - 2 * p) / (pts.length - 1)).toFixed(1);
+  const Y = w => (H - p - (w - mn) / (mx - mn) * (H - 2 * p)).toFixed(1);
+  const path = pts.map((w, i) => (i ? 'L' : 'M') + X(i) + ' ' + Y(w)).join(' ');
+  const last = pts[pts.length - 1];
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="體重趨勢">
+    <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${X(pts.length - 1)}" cy="${Y(last)}" r="4" fill="var(--accent)"/></svg>
+    <div class="spark-l"><span>最低 ${lo.toFixed(1)}</span><span>最近 ${last.toFixed(1)} kg</span><span>最高 ${hi.toFixed(1)}</span></div>`;
+}
+
+/* ---------- 月報頁 ---------- */
+function renderReport() {
+  const stats = monthStats(), keys = Object.keys(stats).sort().reverse(), curM = monthKey(today());
+  $('#reports').innerHTML = keys.length ? keys.map(k => {
+    const a = analyze(k, stats), live = k === curM;
+    return `<div class="mcard">
+      <h3><span>${mLabel(k)}</span><span class="badge">${live ? '進行中' : '已結算'}</span></h3>
+      <div class="meta">${a.type === 'base' ? '基準線' : a.prev ? '與 ' + mLabel(a.prev.key) + ' 相比' : ''}</div>
+      <div class="bigdiff ${a.type}">${bigText(a)}</div>
+      <div class="meta">${metaText(a)}</div>
+      <div class="meta">${walkText(a.s)}</div>
+      <div class="msg">${live ? '月底會有正式月報＋勵志小語等著你 🎁（目前數字會隨每天紀錄變動）' : a.msg}</div>
+    </div>`;
+  }).join('') : '<div class="card"><div class="empty">還沒有資料，記錄幾天之後，這裡就會有月報 📊</div></div>';
+}
+
+/* ---------- 設定／備份 ---------- */
+function renderSettings() {
+  const n = Object.keys(db.records).length;
+  const bk = db.lastBackup ? new Date(db.lastBackup).toLocaleString('zh-TW', { hour12: false }) : '尚未備份';
+  $('#info').innerHTML =
+    `<div class="kv"><span>已記錄天數</span><span>${n} 天</span></div>
+     <div class="kv"><span>上次備份</span><span>${bk}</span></div>
+     <div class="kv"><span>版本</span><span>v${VERSION}</span></div>`;
+}
+function payload() {
+  return JSON.stringify({ app: 'walklog', version: 1, exportedAt: new Date().toISOString(),
+    records: db.records, shownMonths: db.shownMonths }, null, 2);
+}
+const fname = () => 'walk-log-backup-' + today() + '.json';
+function markBackup() { db.lastBackup = new Date().toISOString(); save(); renderSettings(); renderBanner(); }
+$('#dlBtn').addEventListener('click', () => {
+  const blob = new Blob([payload()], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = fname();
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  markBackup(); toast('備份檔已下載 ✅');
+});
+$('#shareBtn').addEventListener('click', async () => {
+  const file = new File([payload()], fname(), { type: 'application/json' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: '走路日記備份' }); markBackup(); toast('備份完成 ✅'); }
+    catch (e) { /* 使用者取消 */ }
+  } else { $('#dlBtn').click(); }
+});
+$('#impBtn').addEventListener('click', () => $('#impFile').click());
+$('#impFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!d || d.app !== 'walklog' || typeof d.records !== 'object') throw new Error('format');
+    const clean = {};
+    for (const [k, r] of Object.entries(d.records)) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !r) continue;
+      const w = num(r.w), n = num(r.noon), ev = num(r.eve);
+      clean[k] = { w: w != null && w >= 20 && w <= 300 ? w : null,
+        noon: n != null && n >= 0 && n <= 720 ? n : 0, eve: ev != null && ev >= 0 && ev <= 720 ? ev : 0 };
+    }
+    const cnt = Object.keys(clean).length;
+    if (!cnt) throw new Error('empty');
+    if (!confirm('備份檔裡有 ' + cnt + ' 天的紀錄。\n按「確定」＝合併進來（同一天以備份檔為準）。')) return;
+    Object.assign(db.records, clean);
+    db.shownMonths = Array.from(new Set(db.shownMonths.concat(Array.isArray(d.shownMonths) ? d.shownMonths.filter(x => /^\d{4}-\d{2}$/.test(x)) : [])));
+    save(); fill(); renderAll(); renderSettings(); toast('匯入完成 ✅ 共 ' + cnt + ' 天');
+  } catch (err) { toast('這個檔案看起來不是走路日記的備份檔 😅'); }
+});
+$('#wipeBtn').addEventListener('click', () => {
+  if (!confirm('這會刪除這支手機上所有走路紀錄，而且無法復原。\n建議先備份。確定要繼續嗎？')) return;
+  if (!confirm('再確認一次：真的要全部清除嗎？')) return;
+  db = { records: {}, shownMonths: [], lastBackup: null };
+  save(); fill(); renderAll(); renderSettings(); toast('已全部清除');
+});
+
+/* ---------- 共用 ---------- */
+let tt;
+function toast(m) {
+  const t = $('#toast'); t.textContent = m; t.classList.add('show');
+  clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2400);
+}
+function go(name) {
+  document.querySelectorAll('.view').forEach(v => v.hidden = v.id !== 'v-' + name);
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.v === name));
+  window.scrollTo(0, 0);
+  if (name === 'rep') renderReport();
+  if (name === 'list') renderList();
+  if (name === 'set') renderSettings();
+}
+document.querySelector('.tabbar').addEventListener('click', e => {
+  const t = e.target.closest('.tab'); if (t) go(t.dataset.v);
+});
+function renderAll() {
+  const d = new Date();
+  $('#sub').textContent = `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} 週${WD[d.getDay()]}`;
+  renderStats(); renderBanner(); renderList();
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  const t = today();
+  if (t !== lastToday) { if (cur === lastToday) cur = t; lastToday = t; fill(); }
+  renderAll(); checkMonthReport();
+});
+
+fill(); renderAll(); checkMonthReport();
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
