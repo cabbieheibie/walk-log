@@ -39,6 +39,12 @@ input.big:focus{border-color:var(--accent)}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 6px}
 .chip{border:0;background:var(--bg);color:var(--text);border-radius:999px;padding:7px 14px;font:inherit;font-size:14px}
 .chip:active{background:var(--accent);color:#fff}
+.chip.on{background:var(--accent);color:#fff;font-weight:600}
+.sec.sm{font-size:14px;color:var(--sub);font-weight:500;margin:12px 0 0}
+input.manual{width:100%;border:1.5px solid var(--line);background:var(--bg);color:var(--text);border-radius:12px;
+  font:600 18px/1.2 inherit;padding:10px 14px;text-align:center;outline:none;margin:2px 0 6px}
+input.manual:focus{border-color:var(--accent)}
+.sep{border:0;border-top:1px solid var(--line);margin:18px 0 4px}
 .total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);margin-top:12px;padding:12px 0 8px;color:var(--sub)}
 .total b{font-size:32px;color:var(--accent-d)}
 .btn{display:block;width:100%;border:0;border-radius:14px;background:var(--accent);color:#fff;font:600 18px/1 inherit;padding:16px;margin:12px 0}
@@ -106,10 +112,17 @@ input.big:focus{border-color:var(--accent)}
   <div class="card">
     <div class="sec">☀️ 中午走了（分鐘）</div>
     <input class="big" id="noon" type="number" inputmode="numeric" min="0" max="600" placeholder="0">
-    <div class="chips" data-for="noon"></div>
+    <div class="chips min" data-for="noon"></div>
+    <div class="sec sm">速度（km/h）／散步</div>
+    <div class="chips spd" data-for="noon"></div>
+    <input class="manual" id="noonSp" type="number" inputmode="decimal" step="0.1" min="0.5" max="20" placeholder="輸入速度，例如 7.2" hidden>
+    <hr class="sep">
     <div class="sec">🌙 晚上走了（分鐘）</div>
     <input class="big" id="eve" type="number" inputmode="numeric" min="0" max="600" placeholder="0">
-    <div class="chips" data-for="eve"></div>
+    <div class="chips min" data-for="eve"></div>
+    <div class="sec sm">速度（km/h）／散步</div>
+    <div class="chips spd" data-for="eve"></div>
+    <input class="manual" id="eveSp" type="number" inputmode="decimal" step="0.1" min="0.5" max="20" placeholder="輸入速度，例如 7.2" hidden>
     <div class="total"><span>今日合計（自動加總）</span><span><b id="total">0</b> 分鐘</span></div>
   </div>
   <button class="btn" id="saveBtn">儲存今天的紀錄</button>
@@ -121,7 +134,7 @@ input.big:focus{border-color:var(--accent)}
 <section class="view" id="v-list" hidden>
   <div class="card"><div class="sec">📈 體重趨勢（最近 60 筆）</div><div id="spark"></div></div>
   <div class="card" id="list"></div>
-  <div class="hint">點任何一天就能修改 ✏️</div>
+  <div class="hint">點任何一天就能修改 ✏️<br>☀️／🌙 後面是「分鐘 @ 時速（km/h）」，🌳 代表外出散步</div>
 </section>
 
 <!-- 月報 -->
@@ -154,7 +167,7 @@ input.big:focus{border-color:var(--accent)}
 
 <script>
 'use strict';
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 const KEY = 'walklog.v1';
 const $ = s => document.querySelector(s);
 const pad = n => String(n).padStart(2, '0');
@@ -188,9 +201,14 @@ function monthStats() {
   const m = {};
   for (const [d, r] of Object.entries(db.records)) {
     const k = monthKey(d);
-    const s = m[k] || (m[k] = { key: k, days: 0, wSum: 0, wN: 0, minutes: 0, walkDays: 0 });
+    const s = m[k] || (m[k] = { key: k, days: 0, wSum: 0, wN: 0, minutes: 0, walkDays: 0, outMin: 0, spdSum: 0, spdMin: 0 });
     s.days++; s.minutes += tot(r);
     if (tot(r) > 0) s.walkDays++;
+    for (const id of ['noon', 'eve']) {
+      const mins = r[id] || 0; if (!mins) continue;
+      if (r[id + 'K'] === 'out') s.outMin += mins;
+      else if (r[id + 'S'] != null) { s.spdSum += mins * r[id + 'S']; s.spdMin += mins; }
+    }
     if (r.w != null) { s.wSum += r.w; s.wN++; }
   }
   for (const s of Object.values(m)) s.avg = s.wN ? s.wSum / s.wN : null;
@@ -263,6 +281,13 @@ function walkText(s) {
   const avg = s.walkDays ? Math.round(s.minutes / s.walkDays) : 0;
   return `走路 ${s.walkDays} 天　｜　共 ${s.minutes} 分鐘　｜　平均每天 ${avg} 分鐘`;
 }
+function speedText(s) {
+  const p = [];
+  if (s.spdMin) p.push('走路機平均時速 ' + (s.spdSum / s.spdMin).toFixed(1) + ' km/h');
+  if (s.outMin) p.push('外出散步 ' + s.outMin + ' 分鐘 🌳');
+  return p.join('　｜　');
+}
+const speedLine = (s, style) => speedText(s) ? `<div class="meta"${style ? ' style="' + style + '"' : ''}>${speedText(s)}</div>` : '';
 
 /* ---------- 月報彈窗 ---------- */
 function checkMonthReport() {
@@ -280,6 +305,7 @@ function checkMonthReport() {
     <div class="bigdiff ${a.type}">${bigText(a)}</div>
     <div class="meta">${metaText(a)}</div>
     <div class="meta" style="margin-top:4px">${walkText(a.s)}</div>
+    ${speedLine(a.s, 'margin-top:2px')}
     <div class="msg">${a.msg}</div>
     <button class="btn" id="closeModal">收到！繼續走 🚶</button>`;
   $('#modal').hidden = false;
@@ -290,6 +316,49 @@ $('#modal').addEventListener('click', e => {
 
 /* ---------- 記錄頁 ---------- */
 let cur = today(), lastToday = cur;
+
+/* 速度／散步：每個時段（中午、晚上）各自選 */
+const SPEEDS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
+const sess = { noon: { k: 'tm', s: null, manual: false }, eve: { k: 'tm', s: null, manual: false } };
+function renderSpd(id) {
+  const st = sess[id], box = document.querySelector('.spd[data-for="' + id + '"]');
+  const on = c => c ? ' on' : '';
+  box.innerHTML = SPEEDS.map(v => `<button type="button" class="chip${on(st.k === 'tm' && !st.manual && st.s === v)}" data-sp="${v}">${v}</button>`).join('') +
+    `<button type="button" class="chip${on(st.k === 'tm' && st.manual)}" data-sp="manual">其他</button>` +
+    `<button type="button" class="chip${on(st.k === 'out')}" data-sp="out">🌳 散步</button>`;
+  const inp = $('#' + id + 'Sp');
+  inp.hidden = !(st.k === 'tm' && st.manual);
+  if (!inp.hidden && document.activeElement !== inp) inp.value = st.s != null ? st.s : '';
+}
+function loadSess(id, r) {
+  const k = r && r[id + 'K'] === 'out' ? 'out' : 'tm';
+  const s = k === 'tm' && r && r[id + 'S'] != null ? r[id + 'S'] : null;
+  sess[id] = { k, s, manual: s != null && !SPEEDS.includes(s) };
+  renderSpd(id);
+}
+document.querySelectorAll('.spd').forEach(box => {
+  const id = box.dataset.for;
+  box.addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    const st = sess[id], v = b.dataset.sp;
+    if (v === 'out') sess[id] = { k: st.k === 'out' ? 'tm' : 'out', s: null, manual: false };
+    else if (v === 'manual') sess[id] = { k: 'tm', s: null, manual: !(st.k === 'tm' && st.manual) };
+    else { const n = Number(v); sess[id] = { k: 'tm', s: st.k === 'tm' && !st.manual && st.s === n ? null : n, manual: false }; }
+    renderSpd(id);
+    if (sess[id].manual) $('#' + id + 'Sp').focus();
+  });
+  $('#' + id + 'Sp').addEventListener('input', e => { sess[id].s = num(e.target.value); });
+});
+function sessOut(id, mins) {
+  const st = sess[id];
+  if (mins <= 0) return { k: 'tm', s: null };
+  return st.k === 'out' ? { k: 'out', s: null } : { k: 'tm', s: st.s };
+}
+const sessTxt = (r, id) => {
+  const m = r[id] || 0; if (!m) return '0';
+  return r[id + 'K'] === 'out' ? m + ' 🌳' : r[id + 'S'] != null ? m + ' @' + r[id + 'S'] : String(m);
+};
+
 function fill() {
   const r = db.records[cur];
   $('#date').max = today();
@@ -297,13 +366,14 @@ function fill() {
   $('#w').value = r && r.w != null ? r.w : '';
   $('#noon').value = r && r.noon ? r.noon : '';
   $('#eve').value = r && r.eve ? r.eve : '';
+  loadSess('noon', r); loadSess('eve', r);
   $('#delBtn').hidden = !r;
   $('#saveBtn').textContent = r ? '更新這一天的紀錄' : (cur === today() ? '儲存今天的紀錄' : '儲存這一天的紀錄');
   updTotal();
 }
 function updTotal() { $('#total').textContent = (num($('#noon').value) || 0) + (num($('#eve').value) || 0); }
 ['noon', 'eve'].forEach(id => $('#' + id).addEventListener('input', updTotal));
-document.querySelectorAll('.chips').forEach(box => {
+document.querySelectorAll('.chips.min').forEach(box => {
   const id = box.dataset.for;
   box.innerHTML = [10, 15, 20, 30, 45, 60].map(v => `<button type="button" class="chip" data-v="${v}">${v}</button>`).join('') +
     '<button type="button" class="chip" data-v="">清除</button>';
@@ -322,7 +392,13 @@ $('#saveBtn').addEventListener('click', () => {
   if (w != null && (w < 20 || w > 300)) return toast('體重看起來怪怪的，請再確認一下 ⚖️');
   if (n < 0 || e < 0 || n > 600 || e > 600) return toast('分鐘數請填 0～600 之間 ⏱️');
   if (w == null && n === 0 && e === 0) return toast('至少填一項再儲存喔 🙂');
-  db.records[cur] = { w, noon: n, eve: e };
+  for (const [id, mins, label] of [['noon', n, '中午'], ['eve', e, '晚上']]) {
+    const st = sess[id];
+    if (mins > 0 && st.k === 'tm' && st.manual && st.s != null && (st.s < 0.5 || st.s > 20))
+      return toast(label + '的速度請填 0.5～20 km/h 之間 🏃');
+  }
+  const a = sessOut('noon', n), b = sessOut('eve', e);
+  db.records[cur] = { w, noon: n, eve: e, noonK: a.k, noonS: a.s, eveK: b.k, eveS: b.s };
   save(); fill(); renderAll();
   toast('已儲存 ✅ 今天共走 ' + (n + e) + ' 分鐘');
   checkMonthReport();
@@ -364,7 +440,7 @@ function renderList() {
     const r = db.records[d], dt = parse(d);
     return `<button class="item" data-d="${d}">
       <div class="d"><b>${pad(dt.getMonth() + 1)}/${pad(dt.getDate())}</b><small>週${WD[dt.getDay()]}</small></div>
-      <div class="mid"><span>${r.w != null ? r.w.toFixed(1) + ' kg' : '— kg'}</span><small>☀️ ${r.noon || 0} ＋ 🌙 ${r.eve || 0}</small></div>
+      <div class="mid"><span>${r.w != null ? r.w.toFixed(1) + ' kg' : '— kg'}</span><small>☀️ ${sessTxt(r, 'noon')} ＋ 🌙 ${sessTxt(r, 'eve')}</small></div>
       <div class="t">${tot(r)}<small>分</small></div></button>`;
   }).join('') : '<div class="empty">還沒有紀錄，到「記錄」頁新增第一筆吧 👟</div>';
   renderSpark();
@@ -400,6 +476,7 @@ function renderReport() {
       <div class="bigdiff ${a.type}">${bigText(a)}</div>
       <div class="meta">${metaText(a)}</div>
       <div class="meta">${walkText(a.s)}</div>
+      ${speedLine(a.s)}
       <div class="msg">${live ? '月底會有正式月報＋勵志小語等著你 🎁（目前數字會隨每天紀錄變動）' : a.msg}</div>
     </div>`;
   }).join('') : '<div class="card"><div class="empty">還沒有資料，記錄幾天之後，這裡就會有月報 📊</div></div>';
@@ -446,8 +523,11 @@ $('#impFile').addEventListener('change', async e => {
     for (const [k, r] of Object.entries(d.records)) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !r) continue;
       const w = num(r.w), n = num(r.noon), ev = num(r.eve);
+      const sp = v => { const x = num(v); return x != null && x >= 0.5 && x <= 20 ? x : null; };
+      const kn = r.noonK === 'out' ? 'out' : 'tm', ke = r.eveK === 'out' ? 'out' : 'tm';
       clean[k] = { w: w != null && w >= 20 && w <= 300 ? w : null,
-        noon: n != null && n >= 0 && n <= 720 ? n : 0, eve: ev != null && ev >= 0 && ev <= 720 ? ev : 0 };
+        noon: n != null && n >= 0 && n <= 720 ? n : 0, eve: ev != null && ev >= 0 && ev <= 720 ? ev : 0,
+        noonK: kn, noonS: kn === 'out' ? null : sp(r.noonS), eveK: ke, eveS: ke === 'out' ? null : sp(r.eveS) };
     }
     const cnt = Object.keys(clean).length;
     if (!cnt) throw new Error('empty');

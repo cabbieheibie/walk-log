@@ -1,6 +1,6 @@
 // 走路日記 Service Worker：離線可用（stale-while-revalidate）
 // 更新程式後，請把下面的版本號 +1，手機才會換新快取
-const CACHE = 'walklog-v1.0.0';
+const CACHE = 'walklog-v1.1.0';
 const ASSETS = [
   './', './index.html', './manifest.json',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon.png'
